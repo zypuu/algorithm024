@@ -1,8 +1,9 @@
+// 合并两个有序链表
 package main
 
 import "fmt"
 
-
+// ListNode ...
 type ListNode struct {
     Val int
     Next *ListNode
