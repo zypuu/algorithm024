@@ -7,6 +7,9 @@ moveZeros.go: 移动零
 plusOne.go: 加一
 removeDuplicates.go: 删除数组重复项
 merge.go: 合并两个有序数组
+trap.go: 接雨水
+rotate.go: 数组反转
+myCircularDeque.go: 循环双端队列
 
 ## 总结
 
