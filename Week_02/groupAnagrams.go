@@ -5,7 +5,7 @@ import "fmt"
 import "sort"
 import "strings"
 
-// groupAnagrams1 hashmap 质数做key 时间O(n(k+26))，空间O(n(k+26))
+// groupAnagrams1 map法 质数做key 时间O(n(k+26))，空间O(n(k+26))
 func groupAnagrams1(strs []string) [][]string {
     var res [][]string
     resMap := make(map[int][]string, len(strs))

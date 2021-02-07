@@ -1,7 +1,235 @@
 学习笔记
 
+## 树，二叉树，二叉搜索树
 
-## go的map
+### 树
+
+树的深度为层次数
+
+1. 树是元素的集合。
+
+2. 该集合可以为空。这时树中没有元素，我们称树为空树 (empty tree)。
+
+3. 如果该集合不为空，那么该集合有一个根节点，以及0个或者多个子树。根节点与它的子树的根节点用一个边(edge)相连
+
+树的实现：
+每个节点储存元素和多个指向子节点的指针。然而，子节点数目是不确定的。一个父节点可能有大量的子节点，而另一个父节点可能只有一个子节点，而树的增删节点操作会让子节点的数目发生进一步的变化。这种不确定性就可能带来大量的内存相关操作，并且容易造成内存的浪费
+
+节点模板
+``` javascript
+type TreeNode struct {
+      Val int
+      Left *TreeNode
+      Right *TreeNode
+  }
+```
+
+### 二叉树，二叉搜索树
+
+二叉树的每个节点最多只能有2个子节点
+
+二叉搜索树可以方便的实现搜索算法。在搜索元素x的时候，我们可以将x和根节点比较:
+
+1. 如果x等于根节点，那么找到x，停止搜索 (终止条件)
+
+2. 如果x小于根节点，那么搜索左子树
+
+3. 如果x大于根节点，那么搜索右子树
+
+二叉搜索树所需要进行的操作次数最多与树的深度相等。n个节点的二叉搜索树的深度最多为n，最少为log(n)
+
+### 二叉树遍历
+
+时间，空间均为O（n），迭代法，递归法
+
+前序（先序）： 根左右
+
+中序：左根右
+
+后序：左右根
+
+## 堆
+
+分为大顶堆，小顶堆
+
+查找最大或最小：O(1)
+
+删除最大或最小：O（logn）
+
+插入： O（logn）或O（1）
+
+golang 标准库，实现的是小顶堆， "container/heap"包
+
+``` javascript
+// 通过小顶堆实现，列表里是一个2个数字的列表嵌套
+type IHeap []interface{}
+// 返回长度
+func (h IHeap) Len() int { 
+	return len(h) 
+}
+// 小的值
+func (h IHeap) Less(i, j int) bool { 
+	return h[i] < h[j] 
+}
+// 交换
+func (h IHeap) Swap(i, j int) { 
+	h[i], h[j] = h[j], h[i]
+}
+// 入堆
+func (h *IHeap) Push(x interface{}) {
+    *h = append(*h, x)
+}
+// 出堆，得到最小元素
+func (h *IHeap) Pop() interface{} {
+    old := *h
+    n := len(old)
+    x := old[n-1]
+    *h = old[0 : n-1]
+    return x
+}
+```
+
+
+### 二叉堆
+
+1.是一颗完全二叉树，根节点都是满的，除了最后一层
+
+2.树中任意节点的值大于等于或小于等于（二叉大顶，小顶）其子节点的值
+
+3.二叉堆一般都是通过数组实现
+
+4.父节点，子节点位置关系，索引为i
+
+	左子节点：2*i+1
+	右子节点：2*i+2
+	父节点：floor((i-1)/2)
+
+5.插入元素：插入堆尾部，重新维护堆，向上调整
+
+6。删除元素：向下调整
+
+#### golang实现二叉堆
+
+通过数组实现一个二叉大顶堆
+
+``` javascript
+// 最大堆的定义和实现：
+// 最大堆
+type maxHeap struct {
+	size int
+	nums []int
+}
+
+// 获取父节点索引
+func parent(i int) int {
+	if i == 0 {
+		return 0
+	}
+	return (i - 1) / 2
+}
+
+// 获取左节点索引
+func leftChild(i int) int {
+	return 2*i + 1
+}
+
+// 右节点索引
+func rightChild(i int) int {
+	return 2*i + 2
+}
+
+// 初始化
+func NewMaxHeap() *maxHeap {
+	return &maxHeap{}
+}
+
+// 获取大小
+func (heap *maxHeap) GetSize() int {
+	return heap.size
+}
+
+// 判断是否为空
+func (heap *maxHeap) IsEmpty() bool {
+	return heap.size == 0
+}
+
+// 插入元素，并向上调整
+func (heap *maxHeap) SiftUp(i int) {
+	// 小于则赋值
+	if heap.size < len(heap.nums) {
+		heap.nums[heap.size] = i
+	} else { // 大于则扩容
+		heap.nums = append(heap.nums, i)
+	}
+	// 插入的是堆尾，此时的heap.size还没更新，也就是索引
+	parI := parent(heap.size)
+	childI := heap.size
+	// 父节点小于子节点，则交换
+	for heap.nums[parI] < heap.nums[childI] {
+		heap.nums[parI], heap.nums[childI] = heap.nums[childI], heap.nums[parI]
+		childI = parI
+		parI = parent(parI)
+	}
+	heap.size++
+}
+
+// 向下调整
+func siftDown(heap *maxHeap, parI int) {
+	var maxI int
+	for {
+		leftI := leftChild(parI)
+		switch {
+		// 左索引超出size
+		case leftI+1 > heap.size:
+			return
+
+			// 左索引不超,右索引超出size,说明左索引是最后索引
+		case leftI+2 > heap.size:
+			if heap.nums[parI] < heap.nums[leftI] {
+				heap.nums[parI], heap.nums[leftI] = heap.nums[leftI], heap.nums[parI]
+			}
+			return
+		case heap.nums[leftI] >= heap.nums[leftI+1]:
+			maxI = leftI
+		case heap.nums[leftI] < heap.nums[leftI+1]:
+			maxI = leftI + 1
+		}
+
+		// 比左右子节点的值都大,返回
+		if heap.nums[parI] >= heap.nums[maxI] {
+			return
+		}
+
+		heap.nums[parI], heap.nums[maxI] = heap.nums[maxI], heap.nums[parI]
+		parI = maxI
+	}
+}
+
+// 取出对中最大元素,即root节点值
+func (heap *maxHeap) SiftDown() (int, error) {
+	if heap.IsEmpty() {
+		return 0, errors.New("maxHeap is empty.")
+	}
+	vTop := heap.nums[0]
+	heap.size--
+	heap.nums[0], heap.nums[heap.size] = heap.nums[heap.size], 0
+
+	siftDown(heap, 0)
+
+	return vTop, nil
+}
+
+
+// 查看堆中最大元素
+func (heap *maxHeap) GetMax() (int, error) {
+	if heap.IsEmpty() {
+		return 0, errors.New("maxHeap is empty.")
+	}
+	return heap.nums[0], nil
+}
+```
+
+## go的map分析
 
 主要使用go语言，看了go的hashmap
 
