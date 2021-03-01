@@ -130,7 +130,7 @@ func two(nums []int) int {
 	left, right := 0, len(nums) - 1
 	for left <= right {
 		// 得到中间值
-		mid = (left + right) / 2
+		mid = left + (right - left) >> 1
 		// 等于找到则返回
 		if nums[mid] == target {
 			return target or break
@@ -144,6 +144,13 @@ func two(nums []int) int {
 
 ```
 每次循环将搜索范围缩小到之前的一半， O（logN）
+
+PS：
+1.计算 mid 时 ，不能使用 （left + right ）/ 2,否则有可能会导致溢出
+
+2.for循环结束条件是 left <= right， left=right正是最终结果，不能漏掉
+
+3.left = mid + 1,right = mid - 1 而不是 left = mid 和 right = mid
 
 ### 半有序数组
 
