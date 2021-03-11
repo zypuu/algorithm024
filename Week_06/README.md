@@ -62,6 +62,8 @@
 		不开dp数组，直接triangle，不需要赋值了
 		优化空间复杂度，只需dp[],初始化最后一层，记录每一层，逆向循环，整层更新掉
 	3、回文子串（一维问题二维化）：
+		初始化二维dp数组，记录i，j下标为起始的字符串是否是回文串，true，false
+		可优化为1维，在一次里层循环中使用，外层直接从头更新
 
 
 
@@ -86,7 +88,7 @@
 		b = c
 		c = a + b
 		返回c
-	2、打家劫舍问题：
+	2、打家劫舍问题：（打家劫舍2就是分两种情况dp）
 		初始化是二维数组：
 		dp[i]每次计算偷与不偷的情况，最后返回偷与不偷的最大值，从i=1开始，正向
 		dp方程：	dp[i][0] = max(dp[i-1][0], dp[i-1][1]) // i不偷，i-1偷与不偷之间的最大值
@@ -121,6 +123,10 @@
     内层循环：遍历硬币数组当前金额即索引小于硬币数，则为-1跳过或者减去这个硬币金额后前一个也无解是-1
     		 前一个有解的话，就是前一个所需的最小组合数+1，如果这个数字小于dp[i],或者dp[i]没有计算过,则更新dp[i]
    	最后返回amount索引的金额
+   	2、回文串问题：
+   	外层循环：字符串结束下标
+   	里层循环：字符串起始下标，记录起始下标到结束下标（3种情况：1，ij相等，2：ij差1且相等，3，ij差2以上且相等且里面的dp是true，是回文串），一维优化后，只记录起始下标i，不符合记录false，下一个外层从头更新
+
 
 #### 二维循环：从后往前循环，i--
 
@@ -132,3 +138,345 @@
 	dp方程：dp[i][j] = min(dp[i+1][j], dp[i+1][j+1]) + triangle[i][j]
 	优化空间复杂度：dp[]初始化最后一层，向上循环，每次整层更新
 	dp方程：dp[j] = min(dp[j], dp[j+1]) + triangle[i][j]
+
+
+## 动态规划例题
+
+### 爬楼梯
+
+``` javascript
+func climbStairs(n int) int {
+    a, b, c := 0, 1, 1
+    for i := 2; i <= n; i++ {
+        a = b
+        b = c
+        c = a + b
+    }
+    return c
+}
+```
+
+### 打家劫舍
+
+``` javascript
+func rob(nums []int) int {
+    n := len(nums)
+    if n == 0 {
+        return 0
+    }
+    if n == 1 {
+        return nums[0]
+    }
+    pre := nums[0]
+    cur := max(nums[0], nums[1])
+    for i := 2; i < n; i++ {
+        pre, cur = cur, max(cur, pre + nums[i])
+    }
+    return cur
+}
+
+func max(x, y int) int {
+    if x > y {
+        return x
+    }
+    return y
+}
+```
+
+### 打家劫舍2
+
+
+``` javascript
+func rob(nums []int) int {
+    n := len(nums)
+    if n == 1 {
+        return nums[0]
+    }
+    dp := make([]int, n)
+    dp[0] = nums[0]
+    dp[1] = nums[0]
+    for i := 2; i < n - 1; i++  {
+        dp[i] = max(dp[i - 1], dp[i - 2] + nums[i])
+    }
+    res1 := dp[n - 2]
+    dp[0] = 0
+    dp[1] = nums[1]
+    for i := 2; i < n; i++  {
+        dp[i] = max(dp[i - 1], dp[i - 2] + nums[i])
+    }
+    return max(res1, dp[n-1])
+}
+
+func max(x, y int) int {
+    if x > y {
+        return x
+    }
+    return y
+}
+```
+
+### 零钱兑换
+
+完全背包问题
+
+``` javascript
+func coinChange(coins []int, amount int) int {
+    dp := make([]int, amount + 1)
+    for i := 1; i <= amount; i++ {
+        dp[i] = -1
+        for _, c := range coins {
+            if i < c || dp[i-c] == -1 {
+                    continue
+            }
+            
+            count := dp[i-c] + 1
+            if dp[i] == -1 || dp[i] > count {
+                    dp[i] = count
+            }
+        }
+    }
+    return dp[amount]
+}
+```
+
+### 最大子序和
+
+
+``` javascript
+func maxSubArray(nums []int) int {
+    res := nums[0]
+    for i := 1; i < len(nums); i++ {
+        if nums[i] + nums[i-1] > nums[i]{
+            nums[i] += nums[i -1]
+        }
+        if nums[i] > res {
+            res = nums[i]
+        }
+        
+    }
+    return res
+}
+```
+
+### 最大乘积
+
+遍历法，根据负数的数量是奇数还是偶数个
+
+``` javascript
+func maxProduct(nums []int) int {
+    res := nums[0]
+
+    cur := 1
+    for i := 0; i < len(nums); i++ {
+        cur *= nums[i]
+        res = max(cur, res)
+        if nums[i] == 0 {cur = 1}
+    }
+    cur = 1
+    for i := len(nums) - 1; i >= 0; i-- {
+        cur *= nums[i]
+        res = max(cur, res)
+        if nums[i] == 0 {cur = 1}
+    }
+    return res
+}
+
+func max(x, y int) int {
+    if x > y {
+        return x
+    }
+    return y
+}
+```
+
+动态规划
+
+
+``` javascript
+func maxProduct(nums []int) int {
+    mxf, mnf, res := nums[0], nums[0], nums[0]
+    for i := 1; i < len(nums); i++ {
+        mx, mn := mxf, mnf
+        mxf = max(mx * nums[i], max(nums[i], nums[i] * mn))
+        mnf = min(mn * nums[i], min(nums[i], nums[i] * mx))
+        res = max(mxf, res)
+    }
+    return res
+}
+
+func max(x, y int) int {
+    if x > y {
+        return x
+    }
+    return y
+}
+
+func min(x, y int) int {
+    if x > y {
+        return y
+    }
+    return x
+}
+```
+
+### 三角形最小路径和
+
+``` javascript
+func minimumTotal(triangle [][]int) int {
+    n := len(triangle)
+    dp := make([]int, len(triangle[n-1]))
+    for i := 0; i < len(triangle[n-1]); i++ {
+        dp[i] = triangle[n-1][i]
+    }
+    for i := n - 2; i >= 0; i-- {
+        for j := 0; j < len(triangle[i]); j++ {
+            dp[j] = min(dp[j], dp[j+1]) + triangle[i][j]
+        }
+    }
+    return dp[0]
+}
+
+func min(x, y int) int {
+    if x < y {
+        return x
+    }
+    return y
+}
+```
+
+### 回文串
+
+``` javascript
+func countSubstrings(s string) int {
+    n := len(s)
+    dp := make([]bool, n)
+    res := 0
+    for j := 0; j < n; j++ {
+        for i := 0; i <= j; i++ {
+            if i == j {
+                res++
+                dp[i] = true
+            } else if j - i == 1 && s[i] == s[j] {
+                dp[i] = true
+                res++
+            } else if j - i > 1 && s[i] == s[j] && dp[i+1] {
+                dp[i] = true
+                res++
+            } else {
+                dp[i] = false
+            }
+        }
+    }
+    return res
+}
+```
+
+
+### 解码方法
+
+``` javascript
+func numDecodings(s string) int {
+    if s[0] == '0' {
+        return 0
+    }
+    // 一维dp，优化空间复杂度
+    cur, pre := 1, 1
+    for i := 1; i < len(s); i++ {
+        switch {
+        // ‘10’， ‘20’这种情况，不会有额外的解码方法，保持不变，cur=pre
+        case s[i] == '0' && (s[i - 1] == '1' || s[i - 1] == '2'):
+            cur = pre
+        // 除去上一种，其他的0都不合法，直接返回
+        case s[i] == '0':
+            return 0
+        // 可以与前一个数字多一种解码方法的，加上之前的解码方法，并更新
+        case (s[i] <= '6' && (s[i - 1] == '2' || s[i - 1] == '1')) || (s[i] > '6' && s[i - 1] == '1'):
+            tmp := cur
+            cur += pre
+            pre = tmp
+        // 没有多出解码方法的，cur保持不变， pre=cur
+        default:
+            pre = cur
+        }
+    }
+    return cur
+}
+```
+
+### 最大正方形
+
+
+``` javascript
+func maximalSquare(matrix [][]byte) int {
+    m := len(matrix)
+    n := len(matrix[0])
+    dp := make([][]int, m)
+    res := 0
+    // 初始化，并赋值，如果有1，结果为1，特殊处理
+    for i := 0; i < m; i++ {
+        dp[i] = make([]int, n)
+        for j := 0; j < n; j++ {
+            if matrix[i][j] == '1' {
+                dp[i][j] = 1
+                res = 1
+            }
+        }
+    }
+    // 0那一行，最多就是1，不需要进行更新，从1开始遍历
+    for i := 1; i < m; i++ {
+        for j := 1; j < n; j++ {
+            // 如果当前值是1,则以当前点为右下角包含1的正方形，为其他三个点的最小值+1
+            // 为0的则 跳过
+           if dp[i][j] == 1{
+               dp[i][j] = min(min(dp[i-1][j], dp[i][j-1]), dp[i-1][j-1]) + 1
+           }
+           // 更新res
+           if dp[i][j] > res {
+               res = dp[i][j]
+           }
+        }
+    }
+    return res * res
+}
+```
+
+### 最小路径和
+
+``` javascript
+func minPathSum(grid [][]int) int {
+    // 初始化dp矩阵，与原数据矩阵对应
+    m := len(grid)
+    n := len(grid[0])
+    dp := make([][]int, m)
+    for i := 0; i < m; i++ {
+        dp[i] = make([]int, n)
+    }
+    // 遍历矩阵，递推出dp[i][j]的值
+    for i := 0; i < m; i++ {
+        for j := 0; j < n; j++  {
+            switch {
+            // 0,0点特殊处理
+            case i == 0  && j == 0:
+                dp[i][j] = grid[i][j]
+            // 边界特殊处理，原矩阵当前点的 值加上之前的dp值，就是dp当前点的值
+            case i == 0:
+                dp[i][j] = dp[i][j - 1] + grid[i][j]
+            case j == 0:
+                dp[i][j] = dp[i - 1][j] + grid[i][j]
+            // 非边界递推，最小路径，只能向右，向下，之前两个点的最小值，加上原矩阵当前点的值
+            default:
+                dp[i][j] = min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j]
+            }
+        }
+    }
+    return dp[m - 1][n - 1]
+}
+
+func min(x, y int) int {
+    if x > y {
+        return y
+    }
+    return x
+}
+
+```
