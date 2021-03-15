@@ -50,6 +50,8 @@
 		res最终结果，sum当前和，res初始化数组第一个值，从第二个开始
 	4、最大乘积和：
 		初始化一个最大值，一个最小值，结果，三个值，处理正负数的问题
+	5、解码方法问题：
+		初始化两个指针，一个当前位置的解码方法，一个前一个位置的解码方法
 
 
 #### 初始化二维dp数组，dp=[][]int, dp[i][j]的意义
@@ -64,7 +66,12 @@
 	3、回文子串（一维问题二维化）：
 		初始化二维dp数组，记录i，j下标为起始的字符串是否是回文串，true，false
 		可优化为1维，在一次里层循环中使用，外层直接从头更新
-
+	4、最大正方形问题：
+		初始化二维数组，并赋值1，与原数组对应，dp[i][j]代表最大正方形的边长，并初始化最初结果1
+	5、最小路径和问题：
+		初始化二维dp，dp[i][j]代表到当前点的最小路径和
+	6、编辑距离问题：
+		初始化二维dp，长度加1，单词前面加一个空串处理，dp[i][j]表示，单词1和单词2的前ij字符匹配所需要的最小编辑次数
 
 
 ### 循环迭代dp值
@@ -110,7 +117,11 @@
     	最大值：比较最大值*当前值，当前值，当前值*最小值的大小，针对0，变号的处理
     	最小值：比较最小值*当前值，当前值，当前值*最大值的大小，针对0，变号的处理
     	另外思路：负数的个数，偶数则是全部最大，奇数则从前，从后连乘，舍弃1个负数的两种情况的最大值
-
+    5、解码方法问题：
+    	先根据0的位置分情况，只有10,20符合且只能这么解码，所以次数不变
+    	除了上一种其他0都不符合
+    	然后找正常可组成26之内的，则解码方法等于加上之前的，然后更新cur，pre
+    	否则就是单数字那种，更新pre
 
 
 #### 一维循环：从后往前循环，i--
@@ -119,13 +130,30 @@
 
 例：
 	1、零钱兑换问题：
-    外层循环：从第一个金额开始向后遍历，每个金额初始dp[i] = -1
-    内层循环：遍历硬币数组当前金额即索引小于硬币数，则为-1跳过或者减去这个硬币金额后前一个也无解是-1
+    	外层循环：从第一个金额开始向后遍历，每个金额初始dp[i] = -1
+    	内层循环：遍历硬币数组当前金额即索引小于硬币数，则为-1跳过或者减去这个硬币金额后前一个也无解是-1
     		 前一个有解的话，就是前一个所需的最小组合数+1，如果这个数字小于dp[i],或者dp[i]没有计算过,则更新dp[i]
    	最后返回amount索引的金额
    	2、回文串问题：
-   	外层循环：字符串结束下标
-   	里层循环：字符串起始下标，记录起始下标到结束下标（3种情况：1，ij相等，2：ij差1且相等，3，ij差2以上且相等且里面的dp是true，是回文串），一维优化后，只记录起始下标i，不符合记录false，下一个外层从头更新
+   		外层循环：字符串结束下标
+   		里层循环：字符串起始下标，记录起始下标到结束下标（3种情况：1，ij相等，2：ij差1且相等，3，ij差2以上且相等且里面的dp是true，是回文串），一维优化后，只记录起始下标i，不符合记录false，下一个外层从头更新
+   	3、最大正方形问题：
+   		以右下角包含1的为正方形的右下角，其他三个点的最小值+1
+   		dp方程：dp[i][j] = min(min(dp[i-1][j], dp[i][j-1]), dp[i-1][j-1]) + 1
+   	4、最小路径和问题：
+   		分边界考虑：边界：没得选择，加上前面那点的dp值，加上原数组的值
+   		非边界：前面的两个的最小值，加上原数组值
+   		dp方程：dp[i][j] = min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j]
+   	5、编辑距离问题：
+   		里外层循环，两个单词两个指针位置移动，从0开始，0是空串，边界条件初始化（一个单词为空串）
+   		当word ij相等时，不需要操作，ij = i-1，j-1
+   		word ij不等时，三种操作下的最小值+1
+   		替换操作：i-1与j-1匹配，ij替换即可  +1
+   		插入操作：i与j-1匹配，i后面插入j  +1
+   		删除操作：i-1与j匹配，删除i  +1
+   		dp方程： if word1[i-1] == word2[j-1]: dp[i][j] = dp[i - 1][j - 1]
+                else：dp[i][j] = min(min(dp[i - 1][j], dp[i][j - 1]), dp[i - 1][j - 1]) + 1
+        最后返回dp[m][n]
 
 
 #### 二维循环：从后往前循环，i--
@@ -479,4 +507,110 @@ func min(x, y int) int {
     return x
 }
 
+```
+
+### 矩形区域不超过k的最大和
+
+``` javascript
+// 前缀和加上最大子序和
+func maxSumSubmatrix(matrix [][]int, k int) int {
+    rowNum, colNum := len(matrix), len(matrix[0])
+    // 最小值作为初始结果
+    result := math.MinInt32
+    // 按列遍历，起始指针
+    for left := 0; left < colNum; left ++ {
+        rowSum := make([]int, rowNum)
+        // 按列遍历，结束指针
+        for right := left; right < colNum; right++ {
+            // 按行遍历，逐列想加，每一列都是之前列的行行和
+            for row := 0; row < rowNum; row++ {
+                rowSum[row] += matrix[row][right]
+            }
+            // 找最大值，每一列的最大子序和，就是矩形区域的和
+            result = max(result, maxSubArrBelowK(rowSum, k))
+            if result == k {
+                return k
+            }
+        }
+    }
+    return result
+}
+
+// 找最大子序和，因为有k限制
+func maxSubArrBelowK(arr []int, k int) int {
+    // 先按动态规划找最大子序和，找到可以减少时间复杂度
+    sum, max, l := arr[0], arr[0], len(arr)
+    for i := 1; i < l; i++ {
+        if sum > 0 {
+            sum += arr[i]
+        } else {
+            sum = arr[i]
+        }
+        if sum > max {
+            max = sum
+        }
+    }
+    // 如果结果小于k，则找到，返回
+    if max <= k {
+        return max
+    }
+    // 结果大于k，则只能暴力法去找，最接近k的
+    max = math.MinInt32
+    for left := 0; left < l; left++ {
+        sum := 0
+        for right := left; right < l; right++ {
+            sum += arr[right]
+            if sum > max && sum <= k {
+                max = sum
+            }
+            if max == k {
+                return k
+            }
+        }
+    }
+    return max
+}
+```
+
+### 编辑距离
+
+
+``` javascript
+func minDistance(word1 string, word2 string) int {
+    m := len(word1)
+    n := len(word2)
+    // 初始化m+!,n+1,单词前面加一个空串处理
+    dp := make([][]int, m+1)
+    for i := 0; i < m + 1; i++ {
+        dp[i] = make([]int, n+1)
+    }
+    for i := 0; i < m+1; i++ {
+        for j := 0; j < n+1; j++ {
+            switch {
+            // 00位置两个空串是0
+            case i == 0 && j == 0:
+                dp[i][j] = 0
+            // 空串对于另一个单词就一直插入
+            case i == 0:
+                dp[i][j] = dp[i][j - 1] + 1
+            case j == 0:
+                dp[i][j] = dp[i - 1][j] + 1
+            // 如果两个单词相等，则不需要操作
+            case word1[i-1] == word2[j-1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            // dp[i - 1][j - 1]代表替换，dp[i - 1][j]。i-1与j一样，删除i；i与j-1一样。i后面插入j
+            default:
+                dp[i][j] = min(min(dp[i - 1][j], dp[i][j - 1]), dp[i - 1][j - 1]) + 1
+            }
+        }
+    }
+    return dp[m][n]
+}
+
+func min(x, y int) int {
+    if x > y {
+        return y
+    }
+    return x
+}
 ```
