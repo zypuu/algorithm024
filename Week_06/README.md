@@ -33,6 +33,8 @@
 	3、零钱兑换问题：
 		新开dp，初始化一个amount+1的数组，dp[i]组成该金额的最小组合，最终结果是dp[amount]
 		金额依次递增，算出每个金额的最小组合，索引即代表金额
+    4、最长有效括号问题：
+        dp数组，初始化均为0，dp[i]代表当前位置为结尾的最长有效括号，只看）这个的dp，（的为0
 
 
 
@@ -122,6 +124,12 @@
     	除了上一种其他0都不符合
     	然后找正常可组成26之内的，则解码方法等于加上之前的，然后更新cur，pre
     	否则就是单数字那种，更新pre
+    6、最长有效括号：
+        从1开始循环，2个长度才可能有效，只看当前位置是）的dp
+        pre = i - 1 - dp[i-1]，如果前一个是（，则dp[i-1]=0，也兼容进去
+        如果pre的位置 存在，且pre的位置是（，则说明有效，结果+2，如果pre前面还有，则加上前面的dp值
+        dp方程：dp[i] = dp[i-1] + 2
+        最后返回每次循环的最大值
 
 
 #### 一维循环：从后往前循环，i--
@@ -612,5 +620,142 @@ func min(x, y int) int {
         return y
     }
     return x
+}
+```
+
+### 最长有效括号
+
+``` javascript
+// 最长 有效括号，双向遍历法
+func longestValidParentheses(s string) int {
+    if s == "" { return 0 }
+    left, right, res := 0, 0, 0
+    for i := 0; i < len(s); i++ {
+        // 左右计数++
+        if s[i] == '(' { left++ }
+        if s[i] == ')' { right++ }
+        // 右括号比左括号多，则重置，前面的舍弃
+        if right > left { 
+            left = 0
+            right = 0
+        }
+        // 更新结果
+        if left == right { res = max(res, right) }
+    }
+    // 以上会漏掉一种就是左括号始终比右括号多，这种是找不到的
+    // 逆向遍历，正向排除右比左多的，逆向排除左比右多的
+    left, right = 0, 0
+    for i := len(s) - 1; i >= 0; i-- {
+        if s[i] == '(' { left++ }
+        if s[i] == ')' { right++ }
+        if right < left { 
+            left = 0
+            right = 0
+        }
+        if left == right { res = max(res, right) }
+    }
+    return 2 * res
+}
+
+func max(x, y int) int {
+    if x > y {
+        return x
+    }
+    return y
+}
+
+// 动态规划方法
+func longestValidParentheses(s string) int {
+    if s == "" || len(s) < 2 {
+        return 0
+    }
+    dp := make([]int, len(s))
+    res := 0
+    // 从1开始遍历
+    for i := 1; i < len(s); i++ {
+        // 结尾是）才能形成有效括号，只看结尾是）的前面， （的dp值都是0
+        if s[i] == ')' {
+            // 找前面的（，如果前一个就是（，前一个dp值是0，也能找到
+            pre := i - 1- dp[i - 1]
+            // 如果大于0，且找到是（，则结果+2
+            if pre >= 0 && s[pre] == '(' {
+                dp[i] = dp[i-1] + 2
+                // 如果有再前一个，则加上再前一个的dp值
+                if pre - 1 >= 0 { dp[i] += dp[pre - 1] }
+            }
+            // 返回最大值
+            res = max(res, dp[i])
+        }
+        
+    }
+    return res 
+}
+
+func max(x, y int) int {
+    if x > y {
+        return x
+    }
+    return y
+}
+```
+
+### 青蛙过河
+
+``` javascript
+// dfs递归，剪枝
+func canCross(stones []int) bool {
+    // 记录在别的分支处理过的子问题
+    vis := make(map[int]bool, len(stones))
+    var dfs func(int, int) bool
+    dfs = func(index, k int) bool {
+        // 如果在别的分支处理过，说明别的分支无法通过，能通过就说明不会有子问题，一直到底结束递归
+        // 如果找到，说明别的分支没到底，则1直接返回false
+        // 保证石头位置唯一
+        if vis[index*100 + k] {
+            return false
+        }
+        vis[index*100 + k] = true
+        for i := index + 1; i < len(stones); i++ {
+            // 计算下一个石头与当前石头之间的距离
+            dis := stones[i] - stones[index]
+            // 在跳跃单位内，则继续递归，，return true
+            if dis >= k - 1 && dis <= k + 1 {
+                if dfs(i, dis) {
+                    return true
+                }
+            // 超过了k+1，则说明无法到达，直接break
+            } else if dis > k + 1 {
+                break
+            } // 小于k-1，说明太近了，可以下一波循环找后面的石头
+        }
+        // 判断当前分支最后是否到达最后位置
+        return index == len(stones) - 1
+    }
+    return dfs(0, 0)
+}
+
+// 动态规划
+func canCross(stones []int) bool {
+    // dp[stones[i]] 用个map保存第个位置i所有能跳的k值
+    dp := make(map[int]map[int]int, len(stones))
+    for _, i := range stones {
+        dp[i] = make(map[int]int)
+    }
+    dp[0][0] = 0
+    for i := 0; i < len(stones); i++ {
+        for _, k := range dp[stones[i]] {
+             for step := k - 1; step <= k + 1; step++ {
+                //  跳的距离大于0 且 跳到数组中存在的位置 
+                //  如[0,1,3,5,6,8,12,17] 1 点能跳 0，1， 2 共3种距离 只有2跳到了 3里面  
+                 if step > 0 {
+                    if _, ok := dp[stones[i] + step]; ok {
+                        dp[stones[i] + step][i] = step
+                    }           
+                }
+             }
+        }
+    }
+
+    return  len(dp[stones[len(stones)-1]]) != 0
 }
 ```
