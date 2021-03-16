@@ -35,20 +35,25 @@ func canCross(stones []int) bool {
 }
 
 // 动态规划
+// 动态规划
 func canCross(stones []int) bool {
     // dp[stones[i]] 用个map保存第i个位置所有能跳的k值
     dp := make(map[int]map[int]int, len(stones))
+    // 初始化每个石头，和能跳的k值
     for _, i := range stones {
         dp[i] = make(map[int]int)
     }
+    // 第一个石头，0值，跳0步
     dp[0][0] = 0
     for i := 0; i < len(stones); i++ {
         for _, k := range dp[stones[i]] {
+             // 初始0，-1， 0， 1，只有1步可以跳到下一个石头 
              for step := k - 1; step <= k + 1; step++ {
-                //  跳的距离大于0 且 跳到数组中存在的位置 
                 //  如[0,1,3,5,6,8,12,17] 1 点能跳 0，1， 2 共3种距离 只有2跳到了 3里面  
                  if step > 0 {
+                    // 跳的距离大于0 且 跳到数组中存在的位置 
                     if _, ok := dp[stones[i] + step]; ok {
+                        // 则更新这个位置，dp【1】【0】 = 1
                         dp[stones[i] + step][i] = step
                     }           
                 }
