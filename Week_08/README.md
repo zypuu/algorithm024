@@ -1116,3 +1116,40 @@ func solveNQueens(n int) [][]string {
     return res
 }
 ```
+
+### AVL树（平衡二叉树）
+
+基于作者名字命名
+
+平衡因子： 某个结点的左子树的高度减去右子树的高度得到的差值
+
+AVL树的特点：
+1、左右子树的高度差的绝对值小于1，即平衡因子{-1,0,1}
+2、其每一颗子树均为平衡二叉树
+
+节点会储存额外的信息
+
+``` javascript
+type AVLTreeNode struct {
+    value int
+    high  int
+    left  *AVLTreeNode
+    right *AVLTreeNode
+}
+```
+
+AVL树具有监督机制：树的某一部分的不平衡度超过平衡因子后触发相应的平衡操作。保证树的平衡度在平衡因子范围内
+
+通过左旋、右旋操作
+右旋
+![1](./1.png)
+左旋
+![2](./2.png)
+
+分为四种情况
+
+
+### 红黑树
+
+
+
