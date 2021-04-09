@@ -16,6 +16,7 @@ func lengthOfLastWord(s string) int {
 	}
 	return tail - head
 }
+
 func main() {
     
 }
